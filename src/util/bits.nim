@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/31/2021 09:05:48 Sunday
 ##
-## **Modified at:** 01/31/2021 Sunday 11:26:27 AM
+## **Modified at:** 01/31/2021 Sunday 12:30:32 PM
 ##
 ## ----
 ##
@@ -25,10 +25,13 @@
 #   if result < 0:
 #     result = (typeof x)(0xffff_ffff + result)
 #   result = result shr y
-
 {.compile: "shift.c".}
 
-proc lshr*(x: int; n: int): int {.importc: "logicalRightShift".}
+proc lshr*(x: SomeInteger; n: SomeInteger): SomeInteger {.importc: "lshr".}
+# proc lshr*(x: int; n: int): int {.importc: "logical_right_shift".}
+# proc lshr*(x: int; n: int): int {.importc: "logicalRightShift".}
+# proc lshr*(x: int; n: int): int {.importc: "arithmeticRightShift".}
+
 
 import strformat
 

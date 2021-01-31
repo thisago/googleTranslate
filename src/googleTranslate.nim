@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 11:31:58 AM
+## **Modified at:** 01/31/2021 Sunday 12:56:53 PM
 ##
 ## ----
 ##
@@ -63,13 +63,25 @@ type
 
 # b:1023747 2096634565 >>> 1023747 = 262079320
 
-proc apiKeyCalculateSecret(key: int, secret: string): int =
+proc apiKeyCalculateSecret(key: SomeInteger, secret: string): SomeInteger =
   var
     i = 0
   result = key
 
   for _ in 0..<secret.len - 2:
-    echo i
+    let
+      ch = secret[i + 2]
+    var
+      chInt = (typeof key)ch
+
+    if chInt >= (typeof key)('a'): chInt -= 87
+    else: chInt = ($ch).parseInt
+
+    if secret[i + 1] == '+': chInt = (typeof key)(result.lshr(chInt))
+    else: chInt = (typeof key)(result shl chInt)
+
+    if secret[i] == '+': result = result + chInt
+    else: result = result xor chInt
 
     inc i, 3
     if i >= secret.len:
@@ -106,19 +118,13 @@ proc newApiKey*(seed: string): string =
 
   var key = 0
 
-  echo fmt"{code} == [ 48, 49, 50, 51 ] {code == [ 48, 49, 50, 51 ]}" # [ 48, 49, 50, 51 ]
-
   for codeDigit in code:
-    # echo key #  0 49968 50495100 214876788
+    echo key #  0 49968 50495100 214876788
     key += codeDigit
     key = apiKeyCalculateSecret(key, "+-a^+6")
 
-  echo fmt"{key} == 1187396573 {key == 1187396573}" # 1187396573
-
   key = apiKeyCalculateSecret(key, "+-3^+b+-f")
   key = key xor 0
-
-  echo fmt"{key} == 1071285702 {key == 1071285702}" # 1071285702
 
   if key < 0:
     key = (key and 2147483647) + int 2147483648
@@ -132,12 +138,10 @@ when isMainModule:
   # echo fmt"""{a} == 285702.285702 {a == "285702.285702"}"""
   # echo a # 285702.285702
 
-  # echo "\n\n\n--------------------------------"
+  echo apiKeyCalculateSecret(1234, "+-a^+6")
+  echo apiKeyCalculateSecret(-1234, "+-a^+6")
+  echo apiKeyCalculateSecret(42676448, "+-a^+6") # 804489763
 
-  let b = apiKeyCalculateSecret(-234534544, "+-a^+6")
-
-  echo fmt"""{b} == 121087317 {b == 121087317}"""
-  echo b # -1043292958
   # echo newApiKey("0123") == "285702.285702"
 
   # echo newApiKey("ŋ©“")

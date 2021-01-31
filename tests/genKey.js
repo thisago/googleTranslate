@@ -12,28 +12,26 @@
 //#
 //# **Created at:** 01/29/2021 11:25:52 Saturday
 //#
-//# **Modified at:** 01/31/2021 Sunday 12:56:21 PM
+//# **Modified at:** 01/31/2021 Sunday 12:12:35 PM
 //#
 //# ----
 //#
 //# Rewrite of Google Translate API key gen
 //# ----
 
-const newXr = (key: number, secret: string) => {
+function newXr(key, secret) {
   for (let i = 0; i < secret.length - 2; i += 3) {
-    let ch: string = secret.charAt(i + 2),
+    let ch = secret.charAt(i + 2),
       chInt = ch.charCodeAt(0);
-    // console.log(`key: ${key},i: ${i}, ch: ${ch}, chInt: ${chInt}`);
 
     if (chInt >= "a".charCodeAt(0)) {
       chInt = chInt - 87;
     } else {
       chInt = Number(ch);
     }
-
+    
     if (secret.charAt(i + 1) == "+") {
       chInt = key >>> chInt;
-      console.log(`${ch}:${chInt} ${key} >>> ${chInt} = ${key >>> chInt}`);
     } else {
       chInt = key << chInt;
     }
@@ -45,10 +43,10 @@ const newXr = (key: number, secret: string) => {
     }
   }
   return key;
-};
+}
 
-const newKey = (a: string) => {
-  let code: number[] = [];
+function newKey(a) {
+  let code = [];
 
   for (let g = 0; g < a.length; g++) {
     let chCode = a.charCodeAt(g); //? l
@@ -76,9 +74,7 @@ const newKey = (a: string) => {
     }
   }
 
-  let key: number = 0;
-
-  console.log(code);
+  let key = 0;
 
   for (let keyIndex = 0; keyIndex < code.length; keyIndex++) {
     console.log(key);
@@ -98,11 +94,10 @@ const newKey = (a: string) => {
   key = key % 1e6;
 
   return `${key}.${key}`;
-};
+}
 
 console.log(newXr(1234, "+-a^+6"));
-console.log(newXr(-1234, "+-a^+6"));
-console.log(newXr(42676448, "+-a^+6"));
+console.log(newXr(9876, "+-a^+6"));
 // console.log(xr(-234534544, "+-a^+6"));
 
 // console.log(newKey("0123"), newKey("0123") == sM("0123"));
@@ -131,5 +126,5 @@ console.log(newXr(42676448, "+-a^+6"));
 
 // console.log(newXr(12, "+-a^+6"));
 
-console.log(42676448 >>> 43700682752);
-console.log(431238989898912374335920 >>> 12401347);
+console.log(1234 >>> 10 ,1)
+console.log(1234 >> 10 ,1)
