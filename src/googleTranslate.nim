@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 12:56:53 PM
+## **Modified at:** 01/31/2021 Sunday 06:19:55 PM
 ##
 ## ----
 ##
@@ -63,7 +63,7 @@ type
 
 # b:1023747 2096634565 >>> 1023747 = 262079320
 
-proc apiKeyCalculateSecret(key: SomeInteger, secret: string): SomeInteger =
+proc apiKeyCalculateSecret(key: int, secret: string): int =
   var
     i = 0
   result = key
@@ -74,14 +74,23 @@ proc apiKeyCalculateSecret(key: SomeInteger, secret: string): SomeInteger =
     var
       chInt = (typeof key)ch
 
-    if chInt >= (typeof key)('a'): chInt -= 87
-    else: chInt = ($ch).parseInt
+    if chInt >= (typeof key)('a'):
+      dec chInt, 87
+    else:
+      chInt = ($ch).parseInt
 
-    if secret[i + 1] == '+': chInt = (typeof key)(result.lshr(chInt))
-    else: chInt = (typeof key)(result shl chInt)
+    if secret[i + 1] == '+':
+      chInt = (typeof key)(result.lshr(chInt))
+    else:
+      echo fmt"{result} shl {chInt} = {result shl chInt}"
+      chInt = result.lshl chInt
 
-    if secret[i] == '+': result = result + chInt
-    else: result = result xor chInt
+
+    if secret[i] == '+':
+      echo "--|", result, " = ", chInt
+      result = result + chInt
+    else:
+      result = result xor chInt
 
     inc i, 3
     if i >= secret.len:
@@ -148,3 +157,18 @@ when isMainModule:
 
   # echo newApiKey("!@&$")
   # echo newApiKey("!@&$") == "524995.524995"
+
+
+  # JS: 
+  # 1234 shl 10 = 1263616 
+  # -1234 shl 10 = -1263616 
+  # 42676448 shl 10 = 751009792
+
+  # NIM: 
+  # 1234 shl 10 = 1263616
+  # -1234 shl 10 = -1263616
+  # 42676448 shl 10 = 43700682752
+
+  # problem = 
+  #? JS: 42676448 shl 10 = 751009792
+  #? NIM: 42676448 shl 10 = 43700682752

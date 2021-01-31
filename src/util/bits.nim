@@ -12,26 +12,18 @@
 ##
 ## **Created at:** 01/31/2021 09:05:48 Sunday
 ##
-## **Modified at:** 01/31/2021 Sunday 12:30:32 PM
+## **Modified at:** 01/31/2021 Sunday 06:19:37 PM
 ##
 ## ----
 ##
 ## This file contains utilities to handle bit shifts
 ## ----
 
-# proc lshr*(x: SomeNumber, y: int): SomeNumber =
-#   ## Logical right shift
-#   result = x
-#   if result < 0:
-#     result = (typeof x)(0xffff_ffff + result)
-#   result = result shr y
-{.compile: "shift.c".}
+proc lshr*(x: int; n: int): int =
+  return cast[int](cast[cuint](x) shr n)
 
-proc lshr*(x: SomeInteger; n: SomeInteger): SomeInteger {.importc: "lshr".}
-# proc lshr*(x: int; n: int): int {.importc: "logical_right_shift".}
-# proc lshr*(x: int; n: int): int {.importc: "logicalRightShift".}
-# proc lshr*(x: int; n: int): int {.importc: "arithmeticRightShift".}
-
+proc lshl*(x: int; n: int): int =
+  return cast[int](cast[cuint](x) shl n)
 
 import strformat
 
@@ -45,3 +37,8 @@ when isMainModule:
   echo fmt"""{$((-1727632372) shr 11)} == -843571""" # "​​​-1727632372 >> 11​​​" = -843571
   echo fmt"""{$(25355305 shr 6)} == 396176""" # "​​​25355305 >> 6​​​" = 396176
   echo fmt"""{$(1727632372 shr 11)} == 843570""" # "​​​1727632372 >> 11​​​" = 843570
+
+  echo fmt"""{$lshr(-1543503872, 1)} == 1375731712""" # "​​​-25355305 >>> 6​​​" = 66712687
+  echo fmt"""{$lshr( 1543503872, 1)} == 771751936""" # "​​​-1727632372 >>> 11​​​" = 1253581
+  echo fmt"""{$lshr(-1073741824, 1)} == 1610612736""" # "​​​25355305 >>> 6​​​" = 396176
+  echo fmt"""{$lshl(42676448, 10)} == 751009792""" # "​​​25355305 >>> 6​​​" = 396176

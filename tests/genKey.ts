@@ -12,7 +12,7 @@
 //#
 //# **Created at:** 01/29/2021 11:25:52 Saturday
 //#
-//# **Modified at:** 01/31/2021 Sunday 12:56:21 PM
+//# **Modified at:** 01/31/2021 Sunday 06:19:57 PM
 //#
 //# ----
 //#
@@ -21,7 +21,7 @@
 
 const newXr = (key: number, secret: string) => {
   for (let i = 0; i < secret.length - 2; i += 3) {
-    let ch: string = secret.charAt(i + 2),
+    let ch: string = secret[i + 2],
       chInt = ch.charCodeAt(0);
     // console.log(`key: ${key},i: ${i}, ch: ${ch}, chInt: ${chInt}`);
 
@@ -31,15 +31,19 @@ const newXr = (key: number, secret: string) => {
       chInt = Number(ch);
     }
 
-    if (secret.charAt(i + 1) == "+") {
+    if (secret[i + 1] == "+") {
       chInt = key >>> chInt;
       console.log(`${ch}:${chInt} ${key} >>> ${chInt} = ${key >>> chInt}`);
     } else {
+      // chInt += 15;
+      console.log(`${key} shl ${chInt} = ${key << chInt}`);
+
       chInt = key << chInt;
     }
 
-    if (secret.charAt(i) == "+") {
-      key = key + chInt;
+    if (secret[i] == "+") {
+      console.log(key, chInt);
+      key += chInt;
     } else {
       key = key ^ chInt;
     }
