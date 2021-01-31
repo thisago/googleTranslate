@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 11:29:58 AM
+## **Modified at:** 01/31/2021 Sunday 11:31:58 AM
 ##
 ## ----
 ##
@@ -69,26 +69,7 @@ proc apiKeyCalculateSecret(key: int, secret: string): int =
   result = key
 
   for _ in 0..<secret.len - 2:
-    var
-      ch = secret[i + 2]
-      chCode = int ch
-      chInt = chCode
-
-    if chCode >= int('a'):
-      chInt = chCode - 87
-    else:
-      chInt = parseInt($ch)
-
-    if secret[i + 1] == '+':
-      chInt = result.lshr chInt
-
-    else:
-      chInt = result shl chInt
-
-    if secret[i] == '+':
-      result += chInt
-    else:
-      result = result xor chInt
+    echo i
 
     inc i, 3
     if i >= secret.len:
@@ -147,11 +128,11 @@ proc newApiKey*(seed: string): string =
   return $key & "." & $key
 
 when isMainModule:
-  let a = newApiKey("0123")
-  echo fmt"""{a} == 285702.285702 {a == "285702.285702"}"""
-  echo a # 285702.285702
+  # let a = newApiKey("0123")
+  # echo fmt"""{a} == 285702.285702 {a == "285702.285702"}"""
+  # echo a # 285702.285702
 
-  echo "\n\n\n--------------------------------"
+  # echo "\n\n\n--------------------------------"
 
   let b = apiKeyCalculateSecret(-234534544, "+-a^+6")
 
