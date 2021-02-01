@@ -1,0 +1,16 @@
+{
+  "text": "hello fat friends",
+  "pronunciation": "",
+  "from": {
+    "language": { 
+      "didYouMean": false, 
+      "iso": "pt" 
+    },
+    "text": {
+      "autoCorrected": false,
+      "value": "[ola] amigos gordos",
+      "didYouMean": true
+    }
+  },
+  "raw": ""
+}

@@ -1,0 +1,7 @@
+interface Langs {
+    [key: string]: string;
+}
+declare const langs: Langs;
+export declare const getCode: (desiredLang: string) => string | boolean;
+export declare const isSupported: (desiredLang: string) => boolean;
+export default langs;

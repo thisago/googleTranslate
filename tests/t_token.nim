@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:14:45 Saturday
 ##
-## **Modified at:** 02/01/2021 Monday 01:43:12 PM
+## **Modified at:** 02/01/2021 Monday 01:49:38 PM
 ##
 ## ----
 ##
@@ -24,13 +24,13 @@ when not defined(js) and not defined(nimsuggest):
 
 import strformat
 
-import googleTranslate
+import googleTranslate, token
 
 {.emit: """
 const mod = require("./genKey.js");
 """.}
 
-proc newKey(txt: cstring): cstring {.importc: "mod.newKey".}
+proc jsNewApiToken(txt: cstring): cstring {.importc: "mod.newKey".}
 
 const TO_TEST = [
   "0123456",
@@ -51,7 +51,7 @@ block:
   for str in TO_TEST:
     let
       nim = newApiToken(str)
-      js = newKey(str)
+      js = jsNewApiToken(str)
 
       color = if nim == js: "\x1b[32m" else: "\x1b[31m"
 
