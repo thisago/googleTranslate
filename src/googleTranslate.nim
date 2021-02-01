@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 11:39:11 PM
+## **Modified at:** 01/31/2021 Sunday 11:42:48 PM
 ##
 ## ----
 ##
@@ -20,7 +20,6 @@
 ## ----
 
 import strutils
-import strformat
 import util/bits
 
 type
@@ -53,22 +52,11 @@ type
         Ukrainian = "uk", Urdu = "ur", Uzbek = "uz", Vietnamese = "vi",
         Welsh = "cy", Xhosa = "xh", Yiddish = "yi", Yoruba = "yo", Zulu = "zu"
 
-# echo fmt"{$ch}:{$chCode} {$result}.lshr {$chInt} = ", result.lshr chInt
-## 6:51081164 -1025772754 >>> 51081164 = 798143
-
-# 6:768 49200 >>> 768 = 49200
-# 6:801053 51267425 >>> 801053 = 0
-# 6:3405018 217921198 >>> 3405018 = 3
-# 6:18834810 1205427879 >>> 18834810 = 17
-
-# b:1023747 2096634565 >>> 1023747 = 262079320
-
 proc apiKeyCalculateSecret(key: int, secret: string): int =
   var
     i = 0
   result = key
 
-  # echo fmt"1 key: {key}, chInt: {chInt}, ch: {ch}, result: {result}, i: {i}"
   for _ in 0..<secret.len - 2:
     let
       ch = secret[i + 2]
@@ -92,10 +80,9 @@ proc newApiKey*(seed: string): string =
   var
     code = newSeq[int]()
     i = 0
-
   for _ in seed:
-    var chCode = int seed[i]
-
+    var
+      chCode = int seed[i]
     if chCode < 128:
       code.add chCode
     else:
@@ -107,9 +94,7 @@ proc newApiKey*(seed: string): string =
         56320 == (int(seed[i + 1]) and 64512):
           inc i
           chCode = 65536 + ((chCode and 1023) shl 10) + int(seed[i])
-
           code.add (chCode shr 18) or 240
-
           code.add ((chCode shr 12) and 63) or 128
         else:
           code.add (chCode shr 12) or 224;
@@ -117,11 +102,11 @@ proc newApiKey*(seed: string): string =
         code.add ((chCode shr 6) and 63) or 128
     inc i
 
-  var key = 0
+  var
+    key = 0
   for codeDigit in code:
     key += codeDigit
     key = apiKeyCalculateSecret(key, "+-a^+6")
-
   key = apiKeyCalculateSecret(key, "+-3^+b+-f")
   key = cast[int](
     cast[cint](key) xor 0

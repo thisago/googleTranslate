@@ -12,7 +12,7 @@
 //#
 //# **Created at:** 01/29/2021 11:25:52 Saturday
 //#
-//# **Modified at:** 01/31/2021 Sunday 11:39:20 PM
+//# **Modified at:** 01/31/2021 Sunday 11:40:25 PM
 //#
 //# ----
 //#
@@ -96,36 +96,6 @@ const newKey = (a: string) => {
   return `${key}.${key}`;
 };
 
-// console.log(newXr(1234, "+-a^+6"));
-// console.log(newXr(-1234, "+-a^+6"));
-// console.log(newXr(42676448, "+-a^+6"));
-// console.log(xr(-234534544, "+-a^+6"));
-
 console.log("0123", newKey("0123"));
 console.log("test", newKey("test"));
 console.log("!@&$", newKey("!@&$"));
-// console.log(newKey("0123"), newKey("0123") == sM("0123"));
-// console.log(newKey("test"), newKey("test") == sM("test"));
-// console.log(newKey("!@&$"), newKey("!@&$") == sM("!@&$"));
-
-// console.log(newKey("0123"));
-// console.log(newKey("test"));
-// console.log(newKey("!@&$"));
-
-// console.log(newKey("0123") == "285702.285702");
-// console.log(newKey("test") == "684737.684737");
-// console.log(newKey("!@&$") == "524995.524995");
-
-// console.log(-25355305 >>> 6);
-// console.log(-25355305 >> 6);
-
-// console.log(-1727632372 >>> 11);
-// console.log(-1727632372 >> 11);
-
-// console.log(25355305 >>> 6);
-// console.log(25355305 >> 6);
-
-// console.log(1727632372 >>> 11);
-// console.log(1727632372 >> 11);
-
-// console.log(newXr(12, "+-a^+6"));
