@@ -12,7 +12,7 @@
 //#
 //# **Created at:** 01/29/2021 11:25:52 Saturday
 //#
-//# **Modified at:** 01/31/2021 Sunday 06:19:57 PM
+//# **Modified at:** 01/31/2021 Sunday 11:39:20 PM
 //#
 //# ----
 //#
@@ -20,10 +20,13 @@
 //# ----
 
 const newXr = (key: number, secret: string) => {
+  let result = key;
+  // console.log(
+  //   `1 key: ${key}, chInt: ${chInt}, ch: ${ch}, result: ${result}, i: ${i}`
+  // );
   for (let i = 0; i < secret.length - 2; i += 3) {
     let ch: string = secret[i + 2],
       chInt = ch.charCodeAt(0);
-    // console.log(`key: ${key},i: ${i}, ch: ${ch}, chInt: ${chInt}`);
 
     if (chInt >= "a".charCodeAt(0)) {
       chInt = chInt - 87;
@@ -32,30 +35,25 @@ const newXr = (key: number, secret: string) => {
     }
 
     if (secret[i + 1] == "+") {
-      chInt = key >>> chInt;
-      console.log(`${ch}:${chInt} ${key} >>> ${chInt} = ${key >>> chInt}`);
+      chInt = result >>> chInt;
     } else {
-      // chInt += 15;
-      console.log(`${key} shl ${chInt} = ${key << chInt}`);
-
-      chInt = key << chInt;
+      chInt = result << chInt;
     }
 
     if (secret[i] == "+") {
-      console.log(key, chInt);
-      key += chInt;
+      result += chInt;
     } else {
-      key = key ^ chInt;
+      result = result ^ chInt;
     }
   }
-  return key;
+  return result;
 };
 
 const newKey = (a: string) => {
   let code: number[] = [];
 
   for (let g = 0; g < a.length; g++) {
-    let chCode = a.charCodeAt(g); //? l
+    let chCode = a.charCodeAt(g);
     if (chCode < 128) {
       code.push(chCode);
     } else {
@@ -81,16 +79,10 @@ const newKey = (a: string) => {
   }
 
   let key: number = 0;
-
-  console.log(code);
-
   for (let keyIndex = 0; keyIndex < code.length; keyIndex++) {
-    console.log(key);
-
     key += code[keyIndex];
     key = newXr(key, "+-a^+6");
   }
-  console.log(key);
 
   key = newXr(key, "+-3^+b+-f");
   key = key ^ 0;
@@ -104,11 +96,14 @@ const newKey = (a: string) => {
   return `${key}.${key}`;
 };
 
-console.log(newXr(1234, "+-a^+6"));
-console.log(newXr(-1234, "+-a^+6"));
-console.log(newXr(42676448, "+-a^+6"));
+// console.log(newXr(1234, "+-a^+6"));
+// console.log(newXr(-1234, "+-a^+6"));
+// console.log(newXr(42676448, "+-a^+6"));
 // console.log(xr(-234534544, "+-a^+6"));
 
+console.log("0123", newKey("0123"));
+console.log("test", newKey("test"));
+console.log("!@&$", newKey("!@&$"));
 // console.log(newKey("0123"), newKey("0123") == sM("0123"));
 // console.log(newKey("test"), newKey("test") == sM("test"));
 // console.log(newKey("!@&$"), newKey("!@&$") == sM("!@&$"));
@@ -134,6 +129,3 @@ console.log(newXr(42676448, "+-a^+6"));
 // console.log(1727632372 >> 11);
 
 // console.log(newXr(12, "+-a^+6"));
-
-console.log(42676448 >>> 43700682752);
-console.log(431238989898912374335920 >>> 12401347);

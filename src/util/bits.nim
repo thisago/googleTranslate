@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/31/2021 09:05:48 Sunday
 ##
-## **Modified at:** 01/31/2021 Sunday 06:19:37 PM
+## **Modified at:** 01/31/2021 Sunday 11:32:46 PM
 ##
 ## ----
 ##
@@ -23,7 +23,7 @@ proc lshr*(x: int; n: int): int =
   return cast[int](cast[cuint](x) shr n)
 
 proc lshl*(x: int; n: int): int =
-  return cast[int](cast[cuint](x) shl n)
+  return cast[int](cast[cint](x) shl n)
 
 import strformat
 
@@ -42,3 +42,5 @@ when isMainModule:
   echo fmt"""{$lshr( 1543503872, 1)} == 771751936""" # "​​​-1727632372 >>> 11​​​" = 1253581
   echo fmt"""{$lshr(-1073741824, 1)} == 1610612736""" # "​​​25355305 >>> 6​​​" = 396176
   echo fmt"""{$lshl(42676448, 10)} == 751009792""" # "​​​25355305 >>> 6​​​" = 396176
+
+  echo fmt"""{$lshl(2096596422, 15)} == -1025310720""" # "​​​25355305 >>> 6​​​" = 396176

@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 06:19:55 PM
+## **Modified at:** 01/31/2021 Sunday 11:39:11 PM
 ##
 ## ----
 ##
@@ -68,29 +68,21 @@ proc apiKeyCalculateSecret(key: int, secret: string): int =
     i = 0
   result = key
 
+  # echo fmt"1 key: {key}, chInt: {chInt}, ch: {ch}, result: {result}, i: {i}"
   for _ in 0..<secret.len - 2:
     let
       ch = secret[i + 2]
     var
       chInt = (typeof key)ch
 
-    if chInt >= (typeof key)('a'):
-      dec chInt, 87
-    else:
-      chInt = ($ch).parseInt
+    if chInt >= (typeof key)('a'): dec chInt, 87
+    else: chInt = ($ch).parseInt
 
-    if secret[i + 1] == '+':
-      chInt = (typeof key)(result.lshr(chInt))
-    else:
-      echo fmt"{result} shl {chInt} = {result shl chInt}"
-      chInt = result.lshl chInt
+    if secret[i + 1] == '+': chInt = (typeof key)(result.lshr(chInt))
+    else: chInt = result.lshl chInt
 
-
-    if secret[i] == '+':
-      echo "--|", result, " = ", chInt
-      result = result + chInt
-    else:
-      result = result xor chInt
+    if secret[i] == '+': result = result + chInt
+    else: result = result xor chInt
 
     inc i, 3
     if i >= secret.len:
@@ -126,49 +118,24 @@ proc newApiKey*(seed: string): string =
     inc i
 
   var key = 0
-
   for codeDigit in code:
-    echo key #  0 49968 50495100 214876788
     key += codeDigit
     key = apiKeyCalculateSecret(key, "+-a^+6")
 
   key = apiKeyCalculateSecret(key, "+-3^+b+-f")
-  key = key xor 0
+  key = cast[int](
+    cast[cint](key) xor 0
+    )
 
   if key < 0:
-    key = (key and 2147483647) + int 2147483648
+    key = (key and 2147483647) + int(2147483648)
 
-  key = key mod int 1e6
+  key = key mod int(1e6)
 
   return $key & "." & $key
 
+
 when isMainModule:
-  # let a = newApiKey("0123")
-  # echo fmt"""{a} == 285702.285702 {a == "285702.285702"}"""
-  # echo a # 285702.285702
-
-  echo apiKeyCalculateSecret(1234, "+-a^+6")
-  echo apiKeyCalculateSecret(-1234, "+-a^+6")
-  echo apiKeyCalculateSecret(42676448, "+-a^+6") # 804489763
-
-  # echo newApiKey("0123") == "285702.285702"
-
-  # echo newApiKey("ŋ©“")
-
-  # echo newApiKey("!@&$")
-  # echo newApiKey("!@&$") == "524995.524995"
-
-
-  # JS: 
-  # 1234 shl 10 = 1263616 
-  # -1234 shl 10 = -1263616 
-  # 42676448 shl 10 = 751009792
-
-  # NIM: 
-  # 1234 shl 10 = 1263616
-  # -1234 shl 10 = -1263616
-  # 42676448 shl 10 = 43700682752
-
-  # problem = 
-  #? JS: 42676448 shl 10 = 751009792
-  #? NIM: 42676448 shl 10 = 43700682752
+  echo "0123: ", newApiKey("0123")
+  echo "test: ", newApiKey("test")
+  echo "!@&$: ", newApiKey("!@&$")
