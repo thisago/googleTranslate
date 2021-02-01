@@ -9,36 +9,50 @@
 
 ## :Author: Thiago Navarro
 ## :Email: thiago@oxyoy.com
-## 
+##
 ## **Created at:** 01/30/2021 13:14:45 Saturday
-## 
-## **Modified at:** 01/30/2021 Saturday 02:19:23 PM
-## 
+##
+## **Modified at:** 02/01/2021 Monday 01:43:12 PM
+##
 ## ----
-## 
+##
 ## Test for the Google translate module
 ## ----
 
-import unittest
+when not defined(js) and not defined(nimsuggest):
+  {.fatal: "This test need to be used with the JavaScript backend.".}
+
+import strformat
 
 import googleTranslate
 
-#? tests
-suite "API key":
-  
-  test "0123":
-    check(newApiKey("0123") == "285702.285702")
-  test "test":
-    check(newApiKey("test") == "684737.684737")
-  test "!@&$":
-    check(newApiKey("!@&$") == "524995.524995")
+{.emit: """
+const mod = require("./genKey.js");
+""".}
 
-# suite "Translate":
-#   setup:
-#     echo "Setup"
+proc newKey(txt: cstring): cstring {.importc: "mod.newKey".}
 
-#   teardown:
-#     echo "Teardown"
+const TO_TEST = [
+  "0123456",
+  "1234567",
+  "abcdefg",
+  "ABCDEFG",
+  "test",
+  "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus quidem harum numquam hic suscipit iusto voluptate debitis dolores qui, doloribus dolorum rem eligendi, amet at molestiae totam repellendus animi officia?",
+  "ððß”ððð”ß”←¬”↓→←",
+  "",
+  "stgyhneu"
+]
 
-#   test "pt to en":
-#     check googleTranslate(to = Language.en, text = "Olá a todos") == "Hello everyone"
+echo "\nTests"
+
+#? "API key compare with JS"
+block:
+  for str in TO_TEST:
+    let
+      nim = newApiToken(str)
+      js = newKey(str)
+
+      color = if nim == js: "\x1b[32m" else: "\x1b[31m"
+
+    echo color, fmt"{nim} == {js} {nim == js}"

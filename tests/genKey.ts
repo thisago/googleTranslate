@@ -12,7 +12,7 @@
 //#
 //# **Created at:** 01/29/2021 11:25:52 Saturday
 //#
-//# **Modified at:** 01/31/2021 Sunday 11:40:25 PM
+//# **Modified at:** 02/01/2021 Monday 01:14:00 PM
 //#
 //# ----
 //#
@@ -96,6 +96,8 @@ const newKey = (a: string) => {
   return `${key}.${key}`;
 };
 
-console.log("0123", newKey("0123"));
-console.log("test", newKey("test"));
-console.log("!@&$", newKey("!@&$"));
+// console.log("0123", newKey("0123"));
+// console.log("test", newKey("test"));
+// console.log("!@&$", newKey("!@&$"));
+
+export { newKey, newXr };

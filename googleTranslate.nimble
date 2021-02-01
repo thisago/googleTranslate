@@ -10,3 +10,8 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.4.2"
+
+
+task testJs, "Test the lib using js":
+  # exec "nimble test -b:js"
+  exec "nim js -r -d:danger -d:release tests/test1.nim"

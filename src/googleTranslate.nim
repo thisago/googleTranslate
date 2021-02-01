@@ -12,12 +12,15 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 01/31/2021 Sunday 11:42:48 PM
+## **Modified at:** 02/01/2021 Monday 01:40:30 PM
 ##
 ## ----
 ##
 ## Main for the Google Translate implementation module
 ## ----
+##
+## **Notes:**
+## - unicode generates wrong token
 
 import strutils
 import util/bits
@@ -52,7 +55,7 @@ type
         Ukrainian = "uk", Urdu = "ur", Uzbek = "uz", Vietnamese = "vi",
         Welsh = "cy", Xhosa = "xh", Yiddish = "yi", Yoruba = "yo", Zulu = "zu"
 
-proc apiKeyCalculateSecret(key: int, secret: string): int =
+proc tokenApplySecret(key: BiggestInt, secret: string): BiggestInt =
   var
     i = 0
   result = key
@@ -66,8 +69,8 @@ proc apiKeyCalculateSecret(key: int, secret: string): int =
     if chInt >= (typeof key)('a'): dec chInt, 87
     else: chInt = ($ch).parseInt
 
-    if secret[i + 1] == '+': chInt = (typeof key)(result.lshr(chInt))
-    else: chInt = result.lshl chInt
+    if secret[i + 1] == '+': chInt = (typeof key)(result.lshr int chInt)
+    else: chInt = result.lshl int chInt
 
     if secret[i] == '+': result = result + chInt
     else: result = result xor chInt
@@ -76,7 +79,7 @@ proc apiKeyCalculateSecret(key: int, secret: string): int =
     if i >= secret.len:
       break
 
-proc newApiKey*(seed: string): string =
+proc newApiToken*(seed: string): string =
   var
     code = newSeq[int]()
     i = 0
@@ -103,24 +106,22 @@ proc newApiKey*(seed: string): string =
     inc i
 
   var
-    key = 0
+    key: int64 = 0
   for codeDigit in code:
     key += codeDigit
-    key = apiKeyCalculateSecret(key, "+-a^+6")
-  key = apiKeyCalculateSecret(key, "+-3^+b+-f")
-  key = cast[int](
-    cast[cint](key) xor 0
-    )
+    key = tokenApplySecret(key, "+-a^+6")
+
+  key = tokenApplySecret(key, "+-3^+b+-f")
+  key = cast[int](cast[cint](key) xor 0)
 
   if key < 0:
-    key = (key and 2147483647) + int(2147483648)
-
-  key = key mod int(1e6)
+    key = (key and 2147483647) + 2147483648
+  key = key mod int 1e6
 
   return $key & "." & $key
 
 
 when isMainModule:
-  echo "0123: ", newApiKey("0123")
-  echo "test: ", newApiKey("test")
-  echo "!@&$: ", newApiKey("!@&$")
+  echo "0123: ", newApiToken("0123")
+  echo "!@&$: ", newApiToken("!@&$")
+  echo "test: ", newApiToken("test")
