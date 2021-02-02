@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/01/2021 Monday 03:28:30 PM
+## **Modified at:** 02/02/2021 Tuesday 10:09:52 AM
 ##
 ## ----
 ##
@@ -25,8 +25,11 @@
 
 
 import httpclient, json
+import strutils
+import uri
 
 import token
+import util/form
 
 type
   Languages* = enum
@@ -65,47 +68,89 @@ type
         LangUkrainian = "uk", LangUrdu = "ur", LangUzbek = "uz",
         LangVietnamese = "vi", LangWelsh = "cy", LangXhosa = "xh",
         LangYiddish = "yi", LangYoruba = "yo", LangZulu = "zu"
+  Clients* = enum
+    ClientGTX = "gtx", ClientT = "t",
 
 const
-  GOOGLE_TRANSLATE_API_URL = "https://translate.google."
+  # GOOGLE_TRANSLATE_API_URL = "http://127.0.0.1/u2/apache/www/admins/condominos/a.php"
+  GOOGLE_TRANSLATE_API_URL = "https://translate.google.{tld}/translate_a/"
 
 type
   Translator* = ref object
-    corsProxy, tld: string
+    url: Uri
+    client: Clients
 
   TranslatorResult* = tuple
-    text: string
+    text, original: string
+    source: tuple[autoCorrected, didYouMean: bool, value: string]
     pronunciation: string
     language: tuple[didYouMean: bool, iso: Languages]
-    correction: tuple[autoCorrected, didYouMean: bool, value: string]
 
-proc newTranslator*(corsProxy, tld = ""): Translator =
+proc newTranslator*(cors = "", tld = "com", client = ClientT): Translator =
+  let
+    gTUrl = parseUri(GOOGLE_TRANSLATE_API_URL.replace("{tld}", tld))
+    url = if cors == "":
+        gTUrl
+      else:
+        parseUri(cors) / $gTUrl
+
+  if not url.isAbsolute:
+    quit "Sorry, the URL is not valid"
+
   Translator(
-    corsProxy: corsProxy,
-    tld: tld
+    url: url,
+    client: client
   )
 
-proc one*(self: Translator, text: string): TranslatorResult =
-  let client = newHttpClient()
-  client.headers = newHttpHeaders({
-    "Content-type": "application/json"
-  })
+proc one*(self: Translator, text: string, lang = LangAutomatic, to,
+    hl: Languages = LangEnglish): TranslatorResult =
   let
-    body = %*{
-      "_quantity": 1,
-      "_locale": "pt_BR"
+    client = newHttpClient()
+
+    params = %*{
+      "client": self.client,
+      "sl": lang,
+      "tl": to,
+      "hl": hl,
+      "dt": ["at", "bd", "ex", "ld", "md", "qca", "rw", "rm", "ss", "t"],
+      "ie": "UTF-8",
+      "oe": "UTF-8",
+      "otf": 1,
+      "ssel": 0,
+      "tsel": 0,
+      "kc": 7,
+      "q": text,
+      "tk": newApiToken(text)
     }
+    url = self.url / "single"
 
-    response = client.request("https://fakerapi.it/api/v1/users",
-        httpMethod = HttpGet, body = $body)
+  echo url
+  echo toForm params
 
+  client.headers = newHttpHeaders({
+    "Content-type": "application/x-www-form-urlencoded"
+  })
 
-  echo body
+  let
+    response = client.post($url, body = toForm params)
+
   echo response.status
   echo response.body
+
+  if response.status != "200 OK":
+    return
+
+  let
+    body = parseJson response.body
+
+  result.original = text
+  result.text = getStr body{0, 0, 0}
+  result.source.value = getStr body{0, 0, 1}
+
 
 
 when isMainModule:
   let translator = newTranslator()
 
-  echo translator.one("Olá amigos")
+  echo translator.url
+  echo translator.one("Olá amigps")

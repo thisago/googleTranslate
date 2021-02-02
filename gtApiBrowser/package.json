@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "google-translate-api": "^2.3.0",
     "google-translate-api-browser": "^1.1.71"
   }
 }

@@ -25,15 +25,12 @@ Accept: application/json
 
 ###
 
-POST https://translate.googleapis.com/translate_a/single HTTP/1.1
-Content-Type: application/application/x-www-form-urlencoded
-
-
-client=gtx&sl=pt&tl=en&dt=t&q=Olá a todos
+GET https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&dt=%5B%22at%22%2C%22bd%22%2C%22ex%22%2C%22ld%22%2C%22md%22%2C%22qca%22%2C%22rw%22%2C%22rm%22%2C%22ss%22%2C%22t%22%5D&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=7&q=Ol%C3%A1+amigps&tk=882724.882724 HTTP/1.1
+Accept: application/xml
 
 ###
 
-POST https://fakerapi.it/api/v1/users HTTP/1.1
+GET https://fakerapi.it/api/v1/users HTTP/1.1
 Content-Type: application/json
 
 {
