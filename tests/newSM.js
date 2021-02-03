@@ -14,21 +14,7 @@ var wr = function (a) {
   },
   yr = null,
   zr = function (a) {
-    var b;
-    if (null !== yr) b = yr;
-    else {
-      b = wr(String.fromCharCode(84));
-      var c = wr(String.fromCharCode(75));
-      b = [b(), b()];
-      b[1] = c();
-      b = (yr = window[b.join(c())] || "") || "";
-    }
-    var d = wr(String.fromCharCode(116)),
-      c = wr(String.fromCharCode(107)),
-      d = [d(), d()];
-    d[1] = c();
-    c = "&" + d.join("") + "=";
-    d = b.split(".");
+    const c = "tk";
     b = Number(d[0]) || 0;
     for (var e = [], f = 0, g = 0; g < a.length; g++) {
       var l = a.charCodeAt(g);
@@ -53,5 +39,7 @@ var wr = function (a) {
     a ^= Number(d[1]) || 0;
     0 > a && (a = (a & 2147483647) + 2147483648);
     a %= 1e6;
-    return c + (a.toString() + "." + (a ^ b));
+    return a.toString() + "." + (a ^ b);
   };
+
+module.exports = { zr, xr };
