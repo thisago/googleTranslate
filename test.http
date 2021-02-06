@@ -32,7 +32,8 @@ Content-Type: application/json
 }
 
 ###
-POST https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&f.sid=-1989282645219493562&bl=boq_translate-webserver_20210127.10_p0&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=839064&rt=c HTTP/1.1
+POST https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=839064&rt=c HTTP/1.1
+# POST https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&f.sid=-1989282645219493562&bl=boq_translate-webserver_20210127.10_p0&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=839064&rt=c HTTP/1.1
 accept: application/json
 accept-language: en-US,en;q=0.9
 # cache-control: no-cache
@@ -51,3 +52,6 @@ content-type: application/x-www-form-urlencoded;charset=UTF-8
 
 # f.req=%5B%5B%5B%22MkEWBc%22%2C%22%5B%5B%5C%22oicarlos%5C%22%2C%5C%22auto%5C%22%2C%5C%22en%5C%22%2Ctrue%5D%2C%5Bnull%5D%5D%22%2Cnull%2C%22generic%22%5D%5D%5D&
 f.req=[[["MkEWBc","[[\"oi carlos\",\"auto\",\"en\",true],[null]]",null,"generic"]]]
+
+###
+# GET https://translate.googleapis.com/translate_a/single&amp;q=EgSKY8yMGM2-6oAGIhkA8aeDS8Qklz5ctP6cnz8AETE2KaL82YSfMgFy HTTP/1.1

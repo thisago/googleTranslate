@@ -12,24 +12,29 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/02/2021 Tuesday 10:09:52 AM
+## **Modified at:** 02/06/2021 Saturday 12:36:54 PM
 ##
 ## ----
 ##
 ## Main for the Google Translate implementation module
 ## ----
 ##
+## GT is Google Translate
+##
 ## **TODO**
 ## - cache
+## - token cache
 
 
 
 import httpclient, json
-import strutils
+import strutils, strformat
 import uri
 
-import token
+import util/gToken
 import util/form
+
+import re
 
 type
   Languages* = enum
@@ -47,7 +52,7 @@ type
         LangGreek = "el", LangGujarati = "gu", LangHaitianCreole = "ht",
         LangHausa = "ha", LangHawaiian = "haw", LangHebrew = "iw",
         LangHindi = "hi", LangHmong = "hmn", LangHungarian = "hu",
-        LangIcelandic = "is", LangIgbo = "ig", LangIndonesian = "id",
+        LangIcelandic = "is", LangIgbo = "ig", LangIndsinglesian = "id",
         LangIrish = "ga", LangItalian = "it", LangJapanese = "ja",
         LangJavanese = "jw", LangKannada = "kn", LangKazakh = "kk",
         LangKhmer = "km", LangKorean = "ko", LangKurdishKurmanji = "ku",
@@ -68,17 +73,19 @@ type
         LangUkrainian = "uk", LangUrdu = "ur", LangUzbek = "uz",
         LangVietnamese = "vi", LangWelsh = "cy", LangXhosa = "xh",
         LangYiddish = "yi", LangYoruba = "yo", LangZulu = "zu"
-  Clients* = enum
-    ClientGTX = "gtx", ClientT = "t",
 
 const
-  # GOOGLE_TRANSLATE_API_URL = "http://127.0.0.1/u2/apache/www/admins/condominos/a.php"
-  GOOGLE_TRANSLATE_API_URL = "https://translate.google.{tld}/translate_a/"
+  # GT_API_URL = "http://127.0.0.1/u2/apache/www/admins/condominos/a.php"
+  GT_URL = "https://translate.google.{tld}"
+  GT_API_PATH = "/_/TranslateWebserverUi/data/batchexecute"
 
 type
+  Urls = object
+    single: Uri
+
   Translator* = ref object
-    url: Uri
-    client: Clients
+    url: Urls
+    token: Tokens
 
   TranslatorResult* = tuple
     text, original: string
@@ -86,71 +93,122 @@ type
     pronunciation: string
     language: tuple[didYouMean: bool, iso: Languages]
 
-proc newTranslator*(cors = "", tld = "com", client = ClientT): Translator =
+proc newTranslator*(cors = "", tld = "com"): Translator =
   let
-    gTUrl = parseUri(GOOGLE_TRANSLATE_API_URL.replace("{tld}", tld))
-    url = if cors == "":
-        gTUrl
-      else:
-        parseUri(cors) / $gTUrl
+    gTUrl = parseUri(GT_URL.replace("{tld}", tld))
+    url = (if cors == "":
+      gTUrl
+    else:
+      parseUri(cors) / $gTUrl
+    ) / GT_API_PATH
 
   if not url.isAbsolute:
     quit "Sorry, the URL is not valid"
 
   Translator(
-    url: url,
-    client: client
+    url: Urls(
+      single: url
+    ),
+    token: getGTokens($gTUrl, tld)
   )
 
-proc one*(self: Translator, text: string, lang = LangAutomatic, to,
-    hl: Languages = LangEnglish): TranslatorResult =
+proc single*(self: var Translator, text: string, lang = LangAutomatic,
+             to = LangEnglish): TranslatorResult =
+  ## Translate the text from `lang` to `to` params
+
   let
+    urlParams = {
+      "rpcids": "MkEWBc",
+      "f.sid": self.token.fSid,
+      "bl": self.token.bl,
+      "hl": "en-US",
+      "soc-app": "1",
+      "soc-platform": "1",
+      "soc-device": "1",
+      "_reqid": "1015",
+      "rt": "c"
+    }
+    url = self.url.single ? urlParams
+
+    reqBody = encodeUrl( $ %*[[[
+      "MkEWBc",
+      $(%*[
+        [
+          text,
+          lang,
+          to,
+          true
+        ],
+        [nil]
+      ]),
+      nil,
+      "generic"
+    ]]])
+
     client = newHttpClient()
 
-    params = %*{
-      "client": self.client,
-      "sl": lang,
-      "tl": to,
-      "hl": hl,
-      "dt": ["at", "bd", "ex", "ld", "md", "qca", "rw", "rm", "ss", "t"],
-      "ie": "UTF-8",
-      "oe": "UTF-8",
-      "otf": 1,
-      "ssel": 0,
-      "tsel": 0,
-      "kc": 7,
-      "q": text,
-      "tk": newApiToken(text)
-    }
-    url = self.url / "single"
-
-  echo url
-  echo toForm params
-
   client.headers = newHttpHeaders({
-    "Content-type": "application/x-www-form-urlencoded"
+    "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
   })
 
   let
-    response = client.post($url, body = toForm params)
+    response = client.post($url, body = fmt"f.req={reqBody}")
+  var
+    body = response.body
 
-  echo response.status
-  echo response.body
-
-  if response.status != "200 OK":
+  if body == "":
+    echo "Cannot get the response body"
     return
 
-  let
-    body = parseJson response.body
+  body = body.substr(6)
 
-  result.original = text
-  result.text = getStr body{0, 0, 0}
-  result.source.value = getStr body{0, 0, 1}
+  var length = 0
+  block: #? get lenght
+    var matches: array[1, string]
 
+    if not body.match(re"^(\d+)", matches):
+      echo "Cannot get length of response data"
+      return
+
+    try:
+      length = matches[0].parseInt
+    except:
+      echo "Cannot parse matches to number"
+      return
+
+  # echo body
+  let lengthLen = ($length).len
+
+  echo body
+  var json: JsonNode
+  try:
+    let jsonText = body.substr(
+      lengthLen,
+      length + lengthLen
+    )
+    echo jsonText
+    json = parseJson(jsonText)
+
+    json = parseJson(json{0, 2}.getStr)
+  except:
+    echo "Cannot parse json"
+    return
+
+  echo json
+
+  # if json{1, 0, 0, 5}.kind == JNull:
+  #   result.text = json{1, 0, 0, 0}.getStr
+  # else:
+  #   for obj in json{1, 0, 0, 5}:
+  #     if obj{0}.kind != JNull:
+  #       result.text &= obj{0}.getStr
 
 
 when isMainModule:
-  let translator = newTranslator()
+  var translator = newTranslator()
 
-  echo translator.url
-  echo translator.one("Olá amigps")
+  # echo translator.single("oi carlos")
+  echo translator.single("oi")
+
+# https://translate.google.com/translate_a/single?rpcids=MkEWBc&f.sid=boq_translate-webserver_20210202.13_p0&bl=-5408574106297180445&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=1015&rt=c
+# https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=839064&rt=c
