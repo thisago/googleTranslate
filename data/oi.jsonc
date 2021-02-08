@@ -1,0 +1,36 @@
+[
+  [null, null, "pt", [[[0, [[[null, 2]], [true]]]], 2]],
+  [
+    [[null, null, null, true, null, [["Hi", ["Hi"]]]]],
+    "en",
+    1,
+    "auto",
+    ["oi", "auto", "en", true]
+  ],
+  "pt",
+  [
+    "Oi!", // Translations of Oi!
+    null,
+    null,
+    null,
+    null,
+    [
+      [
+        [
+          "interjection", // Interjection Frequency (?)
+          [
+            ["Hi!", null, ["Oi!", "Olá!"], 1, true], // Hi!  Oi!, Olá! ["to", ?, [from lang same words], frequency(less is more), ?]
+            ["Hello!", null, ["Olá!", "Oi!", "Alô!"], 2, true] // Hello!  Olá!, Oi!, Alô!
+          ],
+          "en",
+          "pt"
+        ]
+      ],
+      2
+    ],
+    null,
+    null,
+    "pt",
+    1
+  ]
+]

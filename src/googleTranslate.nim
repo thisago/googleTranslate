@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/06/2021 Saturday 12:36:54 PM
+## **Modified at:** 02/08/2021 Monday 12:18:14 AM
 ##
 ## ----
 ##
@@ -25,14 +25,13 @@
 ## - cache
 ## - token cache
 
-
+{.experimental: "codeReordering".}
 
 import httpclient, json
 import strutils, strformat
 import uri
 
 import util/gToken
-import util/form
 
 import re
 
@@ -87,11 +86,42 @@ type
     url: Urls
     token: Tokens
 
-  TranslatorResult* = tuple
-    text, original: string
-    source: tuple[autoCorrected, didYouMean: bool, value: string]
-    pronunciation: string
-    language: tuple[didYouMean: bool, iso: Languages]
+  TranslatorCorrection = object
+    wrong*: bool
+    text*: string
+
+  TranslatorDefinitionExample = tuple
+    description, text: string
+    synonyms: seq[string]
+
+  TranslatorDefinitions = object
+    verb*, noun*, exclamation*, interjection*, adjective: seq[TranslatorDefinitionExample]
+    abbreviation*: seq[string]
+
+  TranslatorMainTranslation = object
+    main: string
+    alternatives: seq[string]
+
+  TranslatorTranslation = object
+    refer*, text*: string
+    frequency*: int
+
+  TranslatorTranslationAdjective = object
+    text*: string
+    frequency*: int
+
+  TranslatorTranslations = object
+    verb*, noun*: seq[TranslatorTranslation]
+    adjective*: seq[TranslatorTranslationAdjective]
+
+  TranslatorResult* = object
+    translation*: TranslatorMainTranslation
+    translations*: TranslatorTranslations
+    original*: string
+    pronunciation*: string
+    correction*: TranslatorCorrection
+    definition*: TranslatorDefinitions
+    examples*: seq[string]
 
 proc newTranslator*(cors = "", tld = "com"): Translator =
   let
@@ -162,53 +192,120 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
 
   body = body.substr(6)
 
-  var length = 0
-  block: #? get lenght
-    var matches: array[1, string]
+  let
+    arr = parseBodyToArr(body)
 
-    if not body.match(re"^(\d+)", matches):
-      echo "Cannot get length of response data"
-      return
-
-    try:
-      length = matches[0].parseInt
-    except:
-      echo "Cannot parse matches to number"
-      return
-
-  # echo body
-  let lengthLen = ($length).len
-
-  echo body
   var json: JsonNode
   try:
-    let jsonText = body.substr(
-      lengthLen,
-      length + lengthLen
-    )
-    echo jsonText
-    json = parseJson(jsonText)
-
-    json = parseJson(json{0, 2}.getStr)
+    json = parseJson arr[0]
+    json = parseJson json{0}{2}.getStr
   except:
     echo "Cannot parse json"
     return
 
-  echo json
+  result.original = text
+  if not json{1, 0, 0}{5, 0, 0}.isNil:
+    let
+      mainTranslation = json{1, 0, 0}{5, 0}
 
-  # if json{1, 0, 0, 5}.kind == JNull:
-  #   result.text = json{1, 0, 0, 0}.getStr
-  # else:
-  #   for obj in json{1, 0, 0, 5}:
-  #     if obj{0}.kind != JNull:
-  #       result.text &= obj{0}.getStr
+    result.translation.main = mainTranslation{0}.getStr
+    for possibility in mainTranslation{1}:
+      result.translation.alternatives.add possibility.getStr
+
+  result.pronunciation = json{0, 0}.getStr
+
+  if json{0, 1, 0}.isNil:
+    result.correction.wrong = false
+  else:
+    result.correction.wrong = true
+    result.correction.text = json{0, 1, 0, 0, 1}.
+      getStr.
+      replacef(re"<b><i>(.*)</i></b>", "[$1]")
+
+  let
+    values = json{3}
+    definitions = values{1, 0}
+    translations = values{5, 0}
+    examples = values{2, 0}
+
+  #? get definitions
+  if not definitions.isNil:
+    for definition in definitions:
+      let
+        name = definition[0].getStr
+        defs = definition[1]
+      for def in defs:
+        if name == "abbreviation":
+          result.definition.abbreviation.add def[0].getStr
+        else:
+          var
+            example = (
+              description: def[0].getStr,
+              text: def[1].getStr,
+              synonyms: newSeq[string]()
+            )
+          if not def{3}.isNil:
+            for synonym in def{3}:
+              example.synonyms.add synonym.getStr
+          case name:
+          of "verb": result.definition.verb.add example
+          of "noun": result.definition.noun.add example
+          of "exclamation": result.definition.exclamation.add example
+          of "interjection": result.definition.interjection.add example
+          of "adjective": result.definition.adjective.add example
+
+  if not examples.isNil:
+    for example in examples:
+      result.examples.add example[1].getStr.replacef(re"<b>(.*)</b>", "[$1]")
+
+  #? get the translations
+  if not translations.isNil:
+    for translation in translations:
+      let
+        name = translation[0].getStr
+        defs = translation[1]
+      for def in defs:
+        if name == "adjective":
+          result.translations.adjective.add TranslatorTranslationAdjective(
+            text: def[0].getStr,
+            frequency: def[3].getInt
+          )
+        let
+          translationPossibility = TranslatorTranslation(
+            text: def[0].getStr,
+            refer: def[1].getStr,
+            frequency: def[3].getInt
+          )
+        case name:
+        of "noun": result.translations.noun.add translationPossibility
+        of "verb": result.translations.verb.add translationPossibility
+
+
+proc parseBodyToArr(body: string): seq[string] =
+  ## Parse the result into a array of results
+  var tmp = ""
+  for row in body.split "\n":
+    try:
+      #? check if the row is a number
+      discard row.parseInt()
+      if tmp != "":
+        result.add tmp
+        tmp = ""
+    except:
+      #? if not
+      tmp &= row
+  if tmp != "":
+    result.add tmp
 
 
 when isMainModule:
   var translator = newTranslator()
 
   # echo translator.single("oi carlos")
-  echo translator.single("oi")
-
-# https://translate.google.com/translate_a/single?rpcids=MkEWBc&f.sid=boq_translate-webserver_20210202.13_p0&bl=-5408574106297180445&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=1015&rt=c
-# https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&hl=en-US&soc-app=1&soc-platform=1&soc-device=1&_reqid=839064&rt=c
+  # echo translator.single("hi", to = LangPortuguese)
+  # echo translator.single("lunch", to = LangPortuguese)
+  # echo translator.single("tchau")
+  # echo translator.single("be", to = LangPortuguese)
+  echo translator.single("kind", to = LangPortuguese).translation
+  # echo translator.single("bye", to = LangPortuguese)
+  # echo translator.single("oi")

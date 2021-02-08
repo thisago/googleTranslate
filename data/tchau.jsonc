@@ -1,0 +1,47 @@
+[
+  [null, null, "pt", [[[0, [[[null, 5]], [true]]]], 5]],
+  [
+    [
+      [
+        null,
+        null,
+        null,
+        true,
+        null,
+        [["bye", ["bye", "Goodbye", "good bye", "bye now"]]]
+      ]
+    ],
+    "en",
+    1,
+    "auto",
+    ["tchau", "auto", "en", true]
+  ],
+  "pt",
+  [
+    "Tchau!",
+    null,
+    null,
+    null,
+    null,
+    [
+      [
+        [
+          "interjection",
+          [
+            ["Bye!", null, ["Tchau!", "Adeus!", "Até logo!"], 1, true],
+            ["Goodbye!", null, ["Adeus!", "Tchau!", "Até logo!"], 1, true],
+            ["Bye-Bye!", null, ["Tchau!", "Até logo!", "Adeus!"], 3, true],
+            ["See you later!", null, ["Até logo!", "Tchau!"], 3, true]
+          ],
+          "en",
+          "pt"
+        ]
+      ],
+      4
+    ],
+    null,
+    null,
+    "pt",
+    1
+  ]
+]

@@ -1,0 +1,38 @@
+[
+  ["hī", null, "en"],
+  [
+    [[null, null, null, null, null, [["hi"]]]],
+    "en",
+    1,
+    "auto",
+    ["hi", "auto", "en", true]
+  ],
+  "en",
+  [
+    "hi",
+    [
+      [ // definitions
+        [
+          "exclamation",
+          [
+            [
+              "used as a friendly greeting or to attract attention.",
+              "“Hi there. How was the flight?”",
+              true
+            ]
+          ]
+        ],
+        ["abbreviation", [["Hawaii (in official postal use).", null, true]]]
+      ],
+      2
+    ],
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "en",
+    1
+  ]
+]

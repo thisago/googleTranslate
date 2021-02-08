@@ -1,0 +1,90 @@
+[
+  ["lən(t)SH", null, "en", [[[0, [[[null, 5]], [true]]]], 5]], // pronunciation
+  [
+    [[null, null, null, true, null, [["almoço", ["almoço"]]]]],
+    "pt",
+    1,
+    "auto",
+    ["lunch", "auto", "pt", true]
+  ],
+  "en",
+  [ // definitions
+    "lunch",
+    [
+      [
+        [
+          "noun",
+          [ // examples of noun
+            [
+              "a meal eaten in the middle of the day, typically one that is lighter or less formal than an evening meal.",
+              "a vegetarian lunch",
+              true
+            ]
+          ]
+        ],
+        [
+          "verb",
+          [
+            [
+              "eat lunch.",
+              "he told his wife he was lunching with a client",
+              true
+            ]
+          ]
+        ]
+      ],
+      2
+    ],
+    [
+      [ // shorts examples
+        [null, "public relations people <b>lunch</b> their clients there"],
+        [null, "a vegetarian <b>lunch</b>"],
+        [null, "do join us for <b>lunch</b>"]
+      ],
+      2,
+      3
+    ],
+    null,
+    null,
+    [// translation
+      [
+        [
+          "noun",
+          [
+            ["almoço", "o", ["lunch", "luncheon", "tiffin"], 1, true],
+            ["lanche", "o", ["snack", "lunch", "luncheon"], 2, true],
+            [
+              "merenda",
+              "a",
+              ["lunch", "snack", "luncheon", "light lunch"],
+              3,
+              true
+            ]
+          ],
+          "pt",
+          "en"
+        ],
+        [
+          "verb",
+          [
+            [
+              "almoçar",
+              null,
+              ["lunch", "have lunch", "luncheon", "chop"],
+              2,
+              true
+            ],
+            ["merendar", null, ["lunch", "luncheon"], 3, true]
+          ],
+          "pt",
+          "en"
+        ]
+      ],
+      5
+    ],
+    null,
+    null,
+    "en",
+    1
+  ]
+]

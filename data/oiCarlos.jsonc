@@ -1,0 +1,16 @@
+[
+  [
+    null,
+    [[[null, "oi <b><i>Carlos</i></b>"], null, 2, [6]]],
+    "pt",
+    [[[0, [[[null, 9]], [true]]]], 9]
+  ],
+  [
+    [[null, null, null, true, null, [["Hi Carlos", ["Hi Carlos"]]]]],
+    "en",
+    1,
+    "auto",
+    ["oi carlos", "auto", "en", true]
+  ],
+  "pt"
+]
