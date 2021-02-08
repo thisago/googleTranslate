@@ -12,28 +12,29 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/08/2021 Monday 12:01:41 PM
+## **Modified at:** 02/08/2021 12:29:35 PM Monday
 ##
 ## ----
 ##
-## Main for the Google Translate implementation module
+## Main Google Translate implementation module
 ## ----
 ##
-## GT is Google Translate
+## NOTE: GT is Google Translate
 ##
 ## **TODO**
-## - cache
-## - token cache
+##  | ☐ [1:1] Cache for all translations @started(!time) @done(!time)
+##  | ✔ [0:2] Cache the token @done(02/08/2021 12:04:37)
+##  | ☐ [0:3] Refactor to suport bulk translatons using same base @started(!time) @done(!time)
 
 {.experimental: "codeReordering".}
 
 import httpclient, json
 import strutils, strformat
 import uri
+import re
 
 import util/gToken
 
-import re
 
 type
   Languages* = enum
@@ -79,11 +80,8 @@ const
   GT_API_PATH = "/_/TranslateWebserverUi/data/batchexecute"
 
 type
-  Urls = object
-    single: Uri
-
   Translator* = ref object
-    url: Urls
+    url: Uri
     token: Tokens
 
   TranslatorCorrection = object
@@ -130,6 +128,8 @@ type
     examples*: seq[string]
 
 proc newTranslator*(cors = "", tld = "com"): Translator =
+  ## Creates new Translator object that holds the tld of the GT
+  ## and a cors proxy
   let
     gTUrl = parseUri(GT_URL.replace("{tld}", tld))
     url = (if cors == "":
@@ -142,15 +142,15 @@ proc newTranslator*(cors = "", tld = "com"): Translator =
     quit "Sorry, the URL is not valid"
 
   Translator(
-    url: Urls(
-      single: url
-    ),
+    url: url,
     token: getGTokens($gTUrl, tld)
   )
 
 proc single*(self: var Translator, text: string, `from` = LangAutomatic,
              to = LangEnglish): TranslatorResult =
-  ## Translate the text from `lang` to `to` params
+  ## Translate the text and gets all data of GT api
+  ##
+  ## See: `TranslatorResult<#TranslatorResult>`_
 
   let
     urlParams = {
@@ -164,9 +164,10 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
       "_reqid": "1015",
       "rt": "c"
     }
-    url = self.url.single ? urlParams
+    url = self.url ? urlParams
 
     reqBody = encodeUrl( $ %*[[[
+      # "jQ1olc", # unknown type; maybe autocomplete
       "MkEWBc",
       $(%*[
         [
@@ -371,7 +372,7 @@ when isMainModule:
   # echo translator.single("be", to = LangPortuguese)
   # echo translator.single("ser")
   # echo translator.single("fora")
-  echo translator.single("out", to = LangPortuguese)
+  echo translator.single("out", to = LangArabic).pronunciation
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
