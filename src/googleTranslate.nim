@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/08/2021 Monday 11:47:45 AM
+## **Modified at:** 02/08/2021 Monday 12:01:41 PM
 ##
 ## ----
 ##
@@ -209,7 +209,11 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     echo "Cannot parse json"
     return
 
-  echo json
+  result.translation.language.`from` = `from`
+  result.translation.language.to = to
+
+  if not json{0, 2}.isNil:
+    result.translation.language.detected = parseEnum[Languages](json{0, 2}.getStr)
 
   result.original = text
   if not json{1, 0, 0}{5, 0, 0}.isNil:
@@ -218,7 +222,9 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
 
     result.translation.main = mainTranslation{0}.getStr
     for possibility in mainTranslation{1}:
-      result.translation.alternatives.add possibility.getStr
+      let possibilityStr = possibility.getStr
+      if possibilityStr != result.translation.main:
+        result.translation.alternatives.add possibilityStr
 
   result.pronunciation = json{0, 0}.getStr
 
@@ -237,9 +243,6 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     examples = values{2, 0}
     synonyms = values{4, 0}
 
-
-  echo "\n\nsynonyms"
-  echo synonyms
 
   #? get definitions
   if not definitions.isNil:
@@ -340,8 +343,6 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "abbreviation": result.synonyms.abbreviation.add synon
 
 
-  echo "\n\n"
-
 
 proc parseBodyToArr(body: string): seq[string] =
   ## Parse the result into a array of results
@@ -361,9 +362,6 @@ proc parseBodyToArr(body: string): seq[string] =
 
 
 when isMainModule:
-
-  import sequtils
-
   var translator = newTranslator()
 
   # echo translator.single("oi carlos")
@@ -372,8 +370,8 @@ when isMainModule:
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
   # echo translator.single("ser")
-  let res = translator.single("out", to = LangPortuguese)
-  echo res
+  # echo translator.single("fora")
+  echo translator.single("out", to = LangPortuguese)
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
