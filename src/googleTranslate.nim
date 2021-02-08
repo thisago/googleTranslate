@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/08/2021 Monday 12:18:14 AM
+## **Modified at:** 02/08/2021 Monday 11:47:45 AM
 ##
 ## ----
 ##
@@ -90,37 +90,43 @@ type
     wrong*: bool
     text*: string
 
-  TranslatorDefinitionExample = tuple
+  TranslatorDefinition = tuple
     description, text: string
     synonyms: seq[string]
 
   TranslatorDefinitions = object
-    verb*, noun*, exclamation*, interjection*, adjective: seq[TranslatorDefinitionExample]
-    abbreviation*: seq[string]
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+      exclamation*, interjection*, abbreviation*: seq[TranslatorDefinition]
+
+  TranslatorMainTranslationLanguage = object
+    `from`*, to*, detected*: Languages
 
   TranslatorMainTranslation = object
     main: string
+    language: TranslatorMainTranslationLanguage
     alternatives: seq[string]
 
   TranslatorTranslation = object
     refer*, text*: string
     frequency*: int
-
-  TranslatorTranslationAdjective = object
-    text*: string
-    frequency*: int
+    equivalents*: seq[string]
 
   TranslatorTranslations = object
-    verb*, noun*: seq[TranslatorTranslation]
-    adjective*: seq[TranslatorTranslationAdjective]
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+      exclamation*, interjection*, abbreviation*: seq[TranslatorTranslation]
+
+  TranslatorSynonyms = object
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+      exclamation*, interjection*, abbreviation*: seq[seq[string]]
 
   TranslatorResult* = object
     translation*: TranslatorMainTranslation
     translations*: TranslatorTranslations
+    synonyms*: TranslatorSynonyms
     original*: string
     pronunciation*: string
     correction*: TranslatorCorrection
-    definition*: TranslatorDefinitions
+    definitions*: TranslatorDefinitions
     examples*: seq[string]
 
 proc newTranslator*(cors = "", tld = "com"): Translator =
@@ -142,7 +148,7 @@ proc newTranslator*(cors = "", tld = "com"): Translator =
     token: getGTokens($gTUrl, tld)
   )
 
-proc single*(self: var Translator, text: string, lang = LangAutomatic,
+proc single*(self: var Translator, text: string, `from` = LangAutomatic,
              to = LangEnglish): TranslatorResult =
   ## Translate the text from `lang` to `to` params
 
@@ -165,7 +171,7 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
       $(%*[
         [
           text,
-          lang,
+          `from`,
           to,
           true
         ],
@@ -203,6 +209,8 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
     echo "Cannot parse json"
     return
 
+  echo json
+
   result.original = text
   if not json{1, 0, 0}{5, 0, 0}.isNil:
     let
@@ -227,6 +235,11 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
     definitions = values{1, 0}
     translations = values{5, 0}
     examples = values{2, 0}
+    synonyms = values{4, 0}
+
+
+  echo "\n\nsynonyms"
+  echo synonyms
 
   #? get definitions
   if not definitions.isNil:
@@ -235,24 +248,34 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
         name = definition[0].getStr
         defs = definition[1]
       for def in defs:
-        if name == "abbreviation":
-          result.definition.abbreviation.add def[0].getStr
+        var
+          defin = (
+            description: "",
+            text: "",
+            synonyms: newSeq[string]()
+          )
+
+        if def.len > 1:
+          defin.description = def[0].getStr
+          defin.text = def[1].getStr
         else:
-          var
-            example = (
-              description: def[0].getStr,
-              text: def[1].getStr,
-              synonyms: newSeq[string]()
-            )
-          if not def{3}.isNil:
-            for synonym in def{3}:
-              example.synonyms.add synonym.getStr
-          case name:
-          of "verb": result.definition.verb.add example
-          of "noun": result.definition.noun.add example
-          of "exclamation": result.definition.exclamation.add example
-          of "interjection": result.definition.interjection.add example
-          of "adjective": result.definition.adjective.add example
+          defin.text = def[0].getStr
+
+        if not def{3}.isNil:
+          for synonym in def{3}:
+            defin.synonyms.add synonym.getStr
+        case name:
+        of "adverb": result.definitions.adverb.add defin
+        of "preposition": result.definitions.preposition.add defin
+        of "adjective": result.definitions.adjective.add defin
+        of "noun": result.definitions.noun.add defin
+        of "verb": result.definitions.verb.add defin
+        of "prefix": result.definitions.prefix.add defin
+        of "sufix": result.definitions.sufix.add defin
+        of "pronoun": result.definitions.pronoun.add defin
+        of "exclamation": result.definitions.exclamation.add defin
+        of "interjection": result.definitions.interjection.add defin
+        of "abbreviation": result.definitions.abbreviation.add defin
 
   if not examples.isNil:
     for example in examples:
@@ -265,20 +288,59 @@ proc single*(self: var Translator, text: string, lang = LangAutomatic,
         name = translation[0].getStr
         defs = translation[1]
       for def in defs:
-        if name == "adjective":
-          result.translations.adjective.add TranslatorTranslationAdjective(
-            text: def[0].getStr,
-            frequency: def[3].getInt
-          )
-        let
+        var
           translationPossibility = TranslatorTranslation(
             text: def[0].getStr,
             refer: def[1].getStr,
+            equivalents: @[],
             frequency: def[3].getInt
           )
+
+        for equivalent in def[2]:
+          translationPossibility.equivalents.add equivalent.getStr
+
         case name:
+        of "adverb": result.translations.adverb.add translationPossibility
+        of "preposition": result.translations.preposition.add translationPossibility
+        of "adjective": result.translations.adjective.add translationPossibility
         of "noun": result.translations.noun.add translationPossibility
         of "verb": result.translations.verb.add translationPossibility
+        of "prefix": result.translations.prefix.add translationPossibility
+        of "sufix": result.translations.sufix.add translationPossibility
+        of "pronoun": result.translations.pronoun.add translationPossibility
+        of "exclamation": result.translations.exclamation.add translationPossibility
+        of "interjection": result.translations.interjection.add translationPossibility
+        of "abbreviation": result.translations.abbreviation.add translationPossibility
+
+  #? get the synonyms
+  if not synonyms.isNil:
+    for synonym in synonyms:
+      let
+        name = synonym[0].getStr
+        syns = synonym[1]
+      for syn in syns:
+        var synon = newSeq[seq[string]]()
+
+        for val in syn:
+          var synons = newSeq[string]()
+          for v in val: synons.add v.getStr
+          synon.add synons
+
+        case name:
+        of "adverb": result.synonyms.adverb.add synon
+        of "preposition": result.synonyms.preposition.add synon
+        of "adjective": result.synonyms.adjective.add synon
+        of "noun": result.synonyms.noun.add synon
+        of "verb": result.synonyms.verb.add synon
+        of "prefix": result.synonyms.prefix.add synon
+        of "sufix": result.synonyms.sufix.add synon
+        of "pronoun": result.synonyms.pronoun.add synon
+        of "exclamation": result.synonyms.exclamation.add synon
+        of "interjection": result.synonyms.interjection.add synon
+        of "abbreviation": result.synonyms.abbreviation.add synon
+
+
+  echo "\n\n"
 
 
 proc parseBodyToArr(body: string): seq[string] =
@@ -299,6 +361,9 @@ proc parseBodyToArr(body: string): seq[string] =
 
 
 when isMainModule:
+
+  import sequtils
+
   var translator = newTranslator()
 
   # echo translator.single("oi carlos")
@@ -306,6 +371,9 @@ when isMainModule:
   # echo translator.single("lunch", to = LangPortuguese)
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
-  echo translator.single("kind", to = LangPortuguese).translation
+  # echo translator.single("ser")
+  let res = translator.single("out", to = LangPortuguese)
+  echo res
+  # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
