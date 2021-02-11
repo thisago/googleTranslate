@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/08/2021 12:29:35 PM Monday
+## **Modified at:** 02/11/2021 07:39:52 PM Thursday
 ##
 ## ----
 ##
@@ -33,8 +33,7 @@ import strutils, strformat
 import uri
 import re
 
-import util/gToken
-
+import googleTranslate/gToken
 
 type
   Languages* = enum
@@ -100,9 +99,9 @@ type
     `from`*, to*, detected*: Languages
 
   TranslatorMainTranslation = object
-    main: string
-    language: TranslatorMainTranslationLanguage
-    alternatives: seq[string]
+    main*: string
+    language*: TranslatorMainTranslationLanguage
+    alternatives*: seq[string]
 
   TranslatorTranslation = object
     refer*, text*: string
@@ -118,6 +117,7 @@ type
       exclamation*, interjection*, abbreviation*: seq[seq[string]]
 
   TranslatorResult* = object
+    success*: bool
     translation*: TranslatorMainTranslation
     translations*: TranslatorTranslations
     synonyms*: TranslatorSynonyms
@@ -213,6 +213,11 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
   result.translation.language.`from` = `from`
   result.translation.language.to = to
 
+  if json{0}.len < 4:
+    return
+
+  result.success = true
+
   if not json{0, 2}.isNil:
     result.translation.language.detected = parseEnum[Languages](json{0, 2}.getStr)
 
@@ -233,7 +238,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     result.correction.wrong = false
   else:
     result.correction.wrong = true
-    result.correction.text = json{0, 1, 0, 0, 1}.
+    result.correction.text = json{0, 1, 0}{0, 1}.
       getStr.
       replacef(re"<b><i>(.*)</i></b>", "[$1]")
 
@@ -245,7 +250,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     synonyms = values{4, 0}
 
 
-  #? get definitions
+  # get definitions
   if not definitions.isNil:
     for definition in definitions:
       let
@@ -285,7 +290,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     for example in examples:
       result.examples.add example[1].getStr.replacef(re"<b>(.*)</b>", "[$1]")
 
-  #? get the translations
+  # get the translations
   if not translations.isNil:
     for translation in translations:
       let
@@ -316,7 +321,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "interjection": result.translations.interjection.add translationPossibility
         of "abbreviation": result.translations.abbreviation.add translationPossibility
 
-  #? get the synonyms
+  # get the synonyms
   if not synonyms.isNil:
     for synonym in synonyms:
       let
@@ -350,13 +355,13 @@ proc parseBodyToArr(body: string): seq[string] =
   var tmp = ""
   for row in body.split "\n":
     try:
-      #? check if the row is a number
+      # check if the row is a number
       discard row.parseInt()
       if tmp != "":
         result.add tmp
         tmp = ""
     except:
-      #? if not
+      # if not
       tmp &= row
   if tmp != "":
     result.add tmp
@@ -372,7 +377,7 @@ when isMainModule:
   # echo translator.single("be", to = LangPortuguese)
   # echo translator.single("ser")
   # echo translator.single("fora")
-  echo translator.single("out", to = LangArabic).pronunciation
+  echo translator.single("out", to = LangArabic)
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
