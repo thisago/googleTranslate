@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/11/2021 07:39:52 PM Thursday
+## **Modified at:** 02/11/2021 09:36:37 PM Thursday
 ##
 ## ----
 ##
@@ -28,7 +28,7 @@
 
 {.experimental: "codeReordering".}
 
-import httpclient, json
+import httpclientJs, json
 import strutils, strformat
 import uri
 import re
@@ -145,6 +145,7 @@ proc newTranslator*(cors = "", tld = "com"): Translator =
     url: url,
     token: getGTokens($gTUrl, tld)
   )
+
 
 proc single*(self: var Translator, text: string, `from` = LangAutomatic,
              to = LangEnglish): TranslatorResult =
@@ -349,7 +350,6 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "abbreviation": result.synonyms.abbreviation.add synon
 
 
-
 proc parseBodyToArr(body: string): seq[string] =
   ## Parse the result into a array of results
   var tmp = ""
@@ -376,8 +376,8 @@ when isMainModule:
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
   # echo translator.single("ser")
-  # echo translator.single("fora")
-  echo translator.single("out", to = LangArabic)
+  echo translator.single("fora")
+  # echo translator.single("out", to = LangArabic)
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
