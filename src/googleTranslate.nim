@@ -1,7 +1,7 @@
 # + /data/files/dev/nim/lib/googleTranslate/src/googleTranslate.nim
 #[*
  * Copyright (c) 2021 Thiago Navarro. All rights reserved
- * 
+ *
  * @workspace googleTranslate
  * 
  * @author Thiago Navarro <thiago@oxyoy.com>
@@ -12,7 +12,7 @@
 ##
 ## **Created at:** 01/30/2021 13:25:52 Saturday
 ##
-## **Modified at:** 02/11/2021 09:36:37 PM Thursday
+## **Modified at:** 03/11/2021 12:19:51 PM Thursday
 ##
 ## ----
 ##
@@ -25,10 +25,11 @@
 ##  | ☐ [1:1] Cache for all translations @started(!time) @done(!time)
 ##  | ✔ [0:2] Cache the token @done(02/08/2021 12:04:37)
 ##  | ☐ [0:3] Refactor to suport bulk translatons using same base @started(!time) @done(!time)
+##  | ☐ [15:0] Fix multiline translation data *todoStarted *todoDone
 
 {.experimental: "codeReordering".}
 
-import httpclientJs, json
+import httpclient, json
 import strutils, strformat
 import uri
 import re
@@ -83,37 +84,40 @@ type
     url: Uri
     token: Tokens
 
-  TranslatorCorrection = object
+  TranslatorCorrection* = object
     wrong*: bool
     text*: string
 
-  TranslatorDefinition = tuple
-    description, text: string
-    synonyms: seq[string]
+  TranslatorDefinition* = object
+    description*, text*: string
+    synonyms*: seq[string]
 
-  TranslatorDefinitions = object
-    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+  TranslatorDefinitions* = object
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, suffix*, pronoun*,
       exclamation*, interjection*, abbreviation*: seq[TranslatorDefinition]
 
-  TranslatorMainTranslationLanguage = object
+  TranslatorMainTranslationLanguage* = object
     `from`*, to*, detected*: Languages
 
-  TranslatorMainTranslation = object
-    main*: string
-    language*: TranslatorMainTranslationLanguage
+  TranslatorMainTranslationTerm* = object
+    value*: string
     alternatives*: seq[string]
 
-  TranslatorTranslation = object
+  TranslatorMainTranslation* = object
+    values*: seq[TranslatorMainTranslationTerm]
+    language*: TranslatorMainTranslationLanguage
+
+  TranslatorTranslation* = object
     refer*, text*: string
     frequency*: int
     equivalents*: seq[string]
 
-  TranslatorTranslations = object
-    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+  TranslatorTranslations* = object
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, suffix*, pronoun*,
       exclamation*, interjection*, abbreviation*: seq[TranslatorTranslation]
 
-  TranslatorSynonyms = object
-    adverb*, preposition*, adjective*, noun*, verb*, prefix*, sufix*, pronoun*,
+  TranslatorSynonyms* = object
+    adverb*, preposition*, adjective*, noun*, verb*, prefix*, suffix*, pronoun*,
       exclamation*, interjection*, abbreviation*: seq[seq[string]]
 
   TranslatorResult* = object
@@ -214,6 +218,8 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
   result.translation.language.`from` = `from`
   result.translation.language.to = to
 
+  result.original = text
+
   if json{0}.len < 4:
     return
 
@@ -222,16 +228,22 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
   if not json{0, 2}.isNil:
     result.translation.language.detected = parseEnum[Languages](json{0, 2}.getStr)
 
-  result.original = text
   if not json{1, 0, 0}{5, 0, 0}.isNil:
-    let
-      mainTranslation = json{1, 0, 0}{5, 0}
+    for translation in json{1, 0, 0}{5}:
+      var term = TranslatorMainTranslationTerm(
+        value: translation{0}.getStr,
+        alternatives: @[]
+      )
 
-    result.translation.main = mainTranslation{0}.getStr
-    for possibility in mainTranslation{1}:
-      let possibilityStr = possibility.getStr
-      if possibilityStr != result.translation.main:
-        result.translation.alternatives.add possibilityStr
+      if not translation{1}.isNil:
+        for possibility in translation{1}:
+          let possibilityStr = possibility.getStr
+          if possibilityStr != term.value:
+            term.alternatives.add possibilityStr
+
+
+      result.translation.values.add term
+
 
   result.pronunciation = json{0, 0}.getStr
 
@@ -259,7 +271,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         defs = definition[1]
       for def in defs:
         var
-          defin = (
+          defin = TranslatorDefinition(
             description: "",
             text: "",
             synonyms: newSeq[string]()
@@ -281,7 +293,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "noun": result.definitions.noun.add defin
         of "verb": result.definitions.verb.add defin
         of "prefix": result.definitions.prefix.add defin
-        of "sufix": result.definitions.sufix.add defin
+        of "suffix": result.definitions.suffix.add defin
         of "pronoun": result.definitions.pronoun.add defin
         of "exclamation": result.definitions.exclamation.add defin
         of "interjection": result.definitions.interjection.add defin
@@ -316,7 +328,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "noun": result.translations.noun.add translationPossibility
         of "verb": result.translations.verb.add translationPossibility
         of "prefix": result.translations.prefix.add translationPossibility
-        of "sufix": result.translations.sufix.add translationPossibility
+        of "suffix": result.translations.suffix.add translationPossibility
         of "pronoun": result.translations.pronoun.add translationPossibility
         of "exclamation": result.translations.exclamation.add translationPossibility
         of "interjection": result.translations.interjection.add translationPossibility
@@ -343,7 +355,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
         of "noun": result.synonyms.noun.add synon
         of "verb": result.synonyms.verb.add synon
         of "prefix": result.synonyms.prefix.add synon
-        of "sufix": result.synonyms.sufix.add synon
+        of "suffix": result.synonyms.suffix.add synon
         of "pronoun": result.synonyms.pronoun.add synon
         of "exclamation": result.synonyms.exclamation.add synon
         of "interjection": result.synonyms.interjection.add synon
@@ -376,8 +388,11 @@ when isMainModule:
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
   # echo translator.single("ser")
-  echo translator.single("fora")
+  # echo translator.single("teste", to = LangEnglish)
+  # echo translator.single("teste\nSeu Carlos", to = LangEnglish)
+  echo translator.single("ser\ncomer", to = LangEnglish)
   # echo translator.single("out", to = LangArabic)
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)
   # echo translator.single("oi")
+  # echo translator.single("test", to=LangSpanish)
