@@ -1,38 +1,32 @@
-# + /data/files/dev/nim/lib/googleTranslate/src/googleTranslate.nim
-#[*
- * Copyright (c) 2021 Thiago Navarro. All rights reserved
- *
- * @workspace googleTranslate
- * 
- * @author Thiago Navarro <thiago@oxyoy.com>
+#[
+  Created at: 01/30/2021 13:25:52 Saturday
+  Modified at: 09/17/2021 02:15:03 AM Friday
+
+        Copyright (C) 2021 Thiago Navarro
+  See file "license" for details about copyright
 ]#
 
-## :Author: Thiago Navarro
-## :Email: thiago@oxyoy.com
-##
-## **Created at:** 01/30/2021 13:25:52 Saturday
-##
-## **Modified at:** 03/11/2021 12:19:51 PM Thursday
-##
-## ----
-##
-## Main Google Translate implementation module
-## ----
-##
-## NOTE: GT is Google Translate
-##
-## **TODO**
-##  | ☐ [1:1] Cache for all translations @started(!time) @done(!time)
-##  | ✔ [0:2] Cache the token @done(02/08/2021 12:04:37)
-##  | ☐ [0:3] Refactor to suport bulk translatons using same base @started(!time) @done(!time)
-##  | ☐ [15:0] Fix multiline translation data *todoStarted *todoDone
+##[
+  NOTE: GT is Google Translate
+
+  TODO
+
+  - [ ] Cache for all translations
+  - [x] Cache the token @done(02/08/2021 12:04:37)
+  - [ ] Refactor to suport bulk translations using same base
+  - [ ] Fix multiline translation data
+]##
 
 {.experimental: "codeReordering".}
 
-import httpclient, json
-import strutils, strformat
-import uri
-import re
+import std/[
+  re,
+  uri,
+  httpclient,
+  json,
+  strutils,
+  strformat
+]
 
 import googleTranslate/gToken
 
@@ -75,7 +69,6 @@ type
         LangYiddish = "yi", LangYoruba = "yo", LangZulu = "zu"
 
 const
-  # GT_API_URL = "http://127.0.0.1/u2/apache/www/admins/condominos/a.php"
   GT_URL = "https://translate.google.{tld}"
   GT_API_PATH = "/_/TranslateWebserverUi/data/batchexecute"
 
@@ -86,7 +79,7 @@ type
 
   TranslatorCorrection* = object
     wrong*: bool
-    text*: string
+    value*: string
 
   TranslatorDefinition* = object
     description*, text*: string
@@ -150,13 +143,28 @@ proc newTranslator*(cors = "", tld = "com"): Translator =
     token: getGTokens($gTUrl, tld)
   )
 
+proc isNull(node: JsonNode): bool =
+  try:
+    echo "\n"
+    echo node
+    result =
+      case node.kind:
+      of JObject: node == newJObject()
+      of JArray: node.len == 0
+      of JInt, JString, JFloat, JBool:
+        const noVal = "df3939f11965e7e75db"
+        node.getStr(noVal) == noVal
+      else: true
+    echo result
+  except:
+    result = false
+
 
 proc single*(self: var Translator, text: string, `from` = LangAutomatic,
              to = LangEnglish): TranslatorResult =
   ## Translate the text and gets all data of GT api
   ##
   ## See: `TranslatorResult<#TranslatorResult>`_
-
   let
     urlParams = {
       "rpcids": "MkEWBc",
@@ -193,20 +201,15 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
     "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
   })
 
-  let
-    response = client.post($url, body = fmt"f.req={reqBody}")
-  var
-    body = response.body
-
+  let response = client.post($url, body = fmt"f.req={reqBody}")
+  var body = response.body
   if body == "":
     echo "Cannot get the response body"
     return
 
   body = body.substr(6)
 
-  let
-    arr = parseBodyToArr(body)
-
+  let arr = parseBodyToArr(body)
   var json: JsonNode
   try:
     json = parseJson arr[0]
@@ -217,149 +220,147 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
 
   result.translation.language.`from` = `from`
   result.translation.language.to = to
-
   result.original = text
 
   if json{0}.len < 4:
     return
 
-  result.success = true
+  try:
+    if not json{0, 2}.isNull:
+      result.translation.language.detected = parseEnum[Languages](json{0, 2}.getStr)
 
-  if not json{0, 2}.isNil:
-    result.translation.language.detected = parseEnum[Languages](json{0, 2}.getStr)
+    if not json{1, 0, 0}{5, 0, 0}.isNull:
+      for translation in json{1, 0, 0}{5}:
+        var term = TranslatorMainTranslationTerm(
+          value: translation{0}.getStr,
+          alternatives: @[]
+        )
+        if not translation{1}.isNull:
+          for possibility in translation{1}:
+            let possibilityStr = possibility.getStr
+            if possibilityStr != term.value:
+              term.alternatives.add possibilityStr
+        result.translation.values.add term
+    result.pronunciation = json{0, 0}.getStr
 
-  if not json{1, 0, 0}{5, 0, 0}.isNil:
-    for translation in json{1, 0, 0}{5}:
-      var term = TranslatorMainTranslationTerm(
-        value: translation{0}.getStr,
-        alternatives: @[]
-      )
+    if json{0, 1}.isNull or json{0, 1, 0}.isNull:
+      result.correction.wrong = false
+    else:
+      result.correction.wrong = true
+      result.correction.value = json{0, 1, 0}{0, 1}.
+        getStr.
+        replacef(re"<b><i>(.*)</i></b>", "[$1]")
 
-      if not translation{1}.isNil:
-        for possibility in translation{1}:
-          let possibilityStr = possibility.getStr
-          if possibilityStr != term.value:
-            term.alternatives.add possibilityStr
+    let
+      values = json{3}
+      definitions = values{1, 0}
+      translations = values{5, 0}
+      examples = values{2, 0}
+      synonyms = values{4, 0}
 
+    # get definitions
+    if not definitions.isNull:
+      echo "dad"
+      for definition in definitions:
+        let
+          name = definition[0].getStr
+          defs = definition[1]
+        for def in defs:
+          var
+            defin = TranslatorDefinition(
+              description: "",
+              text: "",
+              synonyms: newSeq[string]()
+            )
 
-      result.translation.values.add term
+          if def.len > 1:
+            defin.description = def[0].getStr
+            defin.text = def[1].getStr
+          else:
+            defin.text = def[0].getStr
 
+          if not def{3}.isNull:
+            for synonym in def{3}:
+              defin.synonyms.add synonym.getStr
+          case name:
+          of "adverb": result.definitions.adverb.add defin
+          of "preposition": result.definitions.preposition.add defin
+          of "adjective": result.definitions.adjective.add defin
+          of "noun": result.definitions.noun.add defin
+          of "verb": result.definitions.verb.add defin
+          of "prefix": result.definitions.prefix.add defin
+          of "suffix": result.definitions.suffix.add defin
+          of "pronoun": result.definitions.pronoun.add defin
+          of "exclamation": result.definitions.exclamation.add defin
+          of "interjection": result.definitions.interjection.add defin
+          of "abbreviation": result.definitions.abbreviation.add defin
 
-  result.pronunciation = json{0, 0}.getStr
+    # if not examples.isNull:
+    #   for example in examples:
+    #     result.examples.add example[1].getStr.replacef(re"<b>(.*)</b>", "[$1]")
 
-  if json{0, 1, 0}.isNil:
-    result.correction.wrong = false
-  else:
-    result.correction.wrong = true
-    result.correction.text = json{0, 1, 0}{0, 1}.
-      getStr.
-      replacef(re"<b><i>(.*)</i></b>", "[$1]")
+    # # get the translations
+    # if not translations.isNull:
+    #   for translation in translations:
+    #     let
+    #       name = translation[0].getStr
+    #       defs = translation[1]
+    #     for def in defs:
+    #       var
+    #         translationPossibility = TranslatorTranslation(
+    #           text: def[0].getStr,
+    #           refer: def[1].getStr,
+    #           equivalents: @[],
+    #           frequency: def[3].getInt
+    #         )
 
-  let
-    values = json{3}
-    definitions = values{1, 0}
-    translations = values{5, 0}
-    examples = values{2, 0}
-    synonyms = values{4, 0}
+    #       for equivalent in def[2]:
+    #         translationPossibility.equivalents.add equivalent.getStr
 
+    #       case name:
+    #       of "adverb": result.translations.adverb.add translationPossibility
+    #       of "preposition": result.translations.preposition.add translationPossibility
+    #       of "adjective": result.translations.adjective.add translationPossibility
+    #       of "noun": result.translations.noun.add translationPossibility
+    #       of "verb": result.translations.verb.add translationPossibility
+    #       of "prefix": result.translations.prefix.add translationPossibility
+    #       of "suffix": result.translations.suffix.add translationPossibility
+    #       of "pronoun": result.translations.pronoun.add translationPossibility
+    #       of "exclamation": result.translations.exclamation.add translationPossibility
+    #       of "interjection": result.translations.interjection.add translationPossibility
+    #       of "abbreviation": result.translations.abbreviation.add translationPossibility
 
-  # get definitions
-  if not definitions.isNil:
-    for definition in definitions:
-      let
-        name = definition[0].getStr
-        defs = definition[1]
-      for def in defs:
-        var
-          defin = TranslatorDefinition(
-            description: "",
-            text: "",
-            synonyms: newSeq[string]()
-          )
+    # # get the synonyms
+    # if not synonyms.isNull:
+    #   for synonym in synonyms:
+    #     let
+    #       name = synonym[0].getStr
+    #       syns = synonym[1]
+    #     for syn in syns:
+    #       var synon = newSeq[seq[string]]()
 
-        if def.len > 1:
-          defin.description = def[0].getStr
-          defin.text = def[1].getStr
-        else:
-          defin.text = def[0].getStr
+    #       for val in syn:
+    #         var synons = newSeq[string]()
+    #         for v in val: synons.add v.getStr
+    #         synon.add synons
 
-        if not def{3}.isNil:
-          for synonym in def{3}:
-            defin.synonyms.add synonym.getStr
-        case name:
-        of "adverb": result.definitions.adverb.add defin
-        of "preposition": result.definitions.preposition.add defin
-        of "adjective": result.definitions.adjective.add defin
-        of "noun": result.definitions.noun.add defin
-        of "verb": result.definitions.verb.add defin
-        of "prefix": result.definitions.prefix.add defin
-        of "suffix": result.definitions.suffix.add defin
-        of "pronoun": result.definitions.pronoun.add defin
-        of "exclamation": result.definitions.exclamation.add defin
-        of "interjection": result.definitions.interjection.add defin
-        of "abbreviation": result.definitions.abbreviation.add defin
+    #       case name:
+    #       of "adverb": result.synonyms.adverb.add synon
+    #       of "preposition": result.synonyms.preposition.add synon
+    #       of "adjective": result.synonyms.adjective.add synon
+    #       of "noun": result.synonyms.noun.add synon
+    #       of "verb": result.synonyms.verb.add synon
+    #       of "prefix": result.synonyms.prefix.add synon
+    #       of "suffix": result.synonyms.suffix.add synon
+    #       of "pronoun": result.synonyms.pronoun.add synon
+    #       of "exclamation": result.synonyms.exclamation.add synon
+    #       of "interjection": result.synonyms.interjection.add synon
+    #       of "abbreviation": result.synonyms.abbreviation.add synon
+    result.success = true
+  except:
+    doAssert false, getCurrentExceptionMsg()
+    discard
 
-  if not examples.isNil:
-    for example in examples:
-      result.examples.add example[1].getStr.replacef(re"<b>(.*)</b>", "[$1]")
-
-  # get the translations
-  if not translations.isNil:
-    for translation in translations:
-      let
-        name = translation[0].getStr
-        defs = translation[1]
-      for def in defs:
-        var
-          translationPossibility = TranslatorTranslation(
-            text: def[0].getStr,
-            refer: def[1].getStr,
-            equivalents: @[],
-            frequency: def[3].getInt
-          )
-
-        for equivalent in def[2]:
-          translationPossibility.equivalents.add equivalent.getStr
-
-        case name:
-        of "adverb": result.translations.adverb.add translationPossibility
-        of "preposition": result.translations.preposition.add translationPossibility
-        of "adjective": result.translations.adjective.add translationPossibility
-        of "noun": result.translations.noun.add translationPossibility
-        of "verb": result.translations.verb.add translationPossibility
-        of "prefix": result.translations.prefix.add translationPossibility
-        of "suffix": result.translations.suffix.add translationPossibility
-        of "pronoun": result.translations.pronoun.add translationPossibility
-        of "exclamation": result.translations.exclamation.add translationPossibility
-        of "interjection": result.translations.interjection.add translationPossibility
-        of "abbreviation": result.translations.abbreviation.add translationPossibility
-
-  # get the synonyms
-  if not synonyms.isNil:
-    for synonym in synonyms:
-      let
-        name = synonym[0].getStr
-        syns = synonym[1]
-      for syn in syns:
-        var synon = newSeq[seq[string]]()
-
-        for val in syn:
-          var synons = newSeq[string]()
-          for v in val: synons.add v.getStr
-          synon.add synons
-
-        case name:
-        of "adverb": result.synonyms.adverb.add synon
-        of "preposition": result.synonyms.preposition.add synon
-        of "adjective": result.synonyms.adjective.add synon
-        of "noun": result.synonyms.noun.add synon
-        of "verb": result.synonyms.verb.add synon
-        of "prefix": result.synonyms.prefix.add synon
-        of "suffix": result.synonyms.suffix.add synon
-        of "pronoun": result.synonyms.pronoun.add synon
-        of "exclamation": result.synonyms.exclamation.add synon
-        of "interjection": result.synonyms.interjection.add synon
-        of "abbreviation": result.synonyms.abbreviation.add synon
 
 
 proc parseBodyToArr(body: string): seq[string] =
@@ -387,10 +388,10 @@ when isMainModule:
   # echo translator.single("lunch", to = LangPortuguese)
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
-  # echo translator.single("ser")
+  echo translator.single("ser")
   # echo translator.single("teste", to = LangEnglish)
   # echo translator.single("teste\nSeu Carlos", to = LangEnglish)
-  echo translator.single("ser\ncomer", to = LangEnglish)
+  # echo translator.single("ser\ncomer", to = LangEnglish)
   # echo translator.single("out", to = LangArabic)
   # echo translator.single("kind", to = LangPortuguese)
   # echo translator.single("bye", to = LangPortuguese)

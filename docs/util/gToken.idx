@@ -1,0 +1,2 @@
+Tokens	util/gToken.html#Tokens	gToken: Tokens	
+getGTokens	util/gToken.html#getGTokens,string,string	gToken: getGTokens(url: string; tld = &quot;com&quot;): Tokens	
