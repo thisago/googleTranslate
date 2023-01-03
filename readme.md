@@ -23,7 +23,7 @@ echo translator.single("Hello World!", to = LangPortuguese)
 
 ## TODO
 
-- [ ] Add to nimble
+- [x] Add to nimble
 - [ ] Add docs
 - [ ] import modules with `from module import proc` insted of `import module`
 - [ ] Installation guide

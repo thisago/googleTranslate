@@ -1,6 +1,6 @@
 #[
   Created at: 01/30/2021 13:25:52 Saturday
-  Modified at: 09/17/2021 02:15:03 AM Friday
+  Modified at: 09/17/2021 09:04:56 PM Friday
 
         Copyright (C) 2021 Thiago Navarro
   See file "license" for details about copyright
@@ -144,9 +144,9 @@ proc newTranslator*(cors = "", tld = "com"): Translator =
   )
 
 proc isNull(node: JsonNode): bool =
+  if node.isNil:
+    return true
   try:
-    echo "\n"
-    echo node
     result =
       case node.kind:
       of JObject: node == newJObject()
@@ -155,10 +155,8 @@ proc isNull(node: JsonNode): bool =
         const noVal = "df3939f11965e7e75db"
         node.getStr(noVal) == noVal
       else: true
-    echo result
   except:
     result = false
-
 
 proc single*(self: var Translator, text: string, `from` = LangAutomatic,
              to = LangEnglish): TranslatorResult =
@@ -206,7 +204,7 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
   if body == "":
     echo "Cannot get the response body"
     return
-
+  
   body = body.substr(6)
 
   let arr = parseBodyToArr(body)
@@ -260,7 +258,6 @@ proc single*(self: var Translator, text: string, `from` = LangAutomatic,
 
     # get definitions
     if not definitions.isNull:
-      echo "dad"
       for definition in definitions:
         let
           name = definition[0].getStr
@@ -385,7 +382,7 @@ when isMainModule:
 
   # echo translator.single("oi carlos")
   # echo translator.single("hi", to = LangPortuguese)
-  # echo translator.single("lunch", to = LangPortuguese)
+  echo translator.single("lunch", to = LangPortuguese)
   # echo translator.single("tchau")
   # echo translator.single("be", to = LangPortuguese)
   echo translator.single("ser")
