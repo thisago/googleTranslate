@@ -25,7 +25,7 @@ echo translator.single("Hello World!", to = LangPortuguese)
 
 - [x] Add to nimble
 - [ ] Add docs
-- [ ] import modules with `from module import proc` insted of `import module`
+- [ ] import modules with `from module import proc` instead of `import module`
 - [ ] Installation guide
 - [ ] Better usage guide
 - [ ] Github actions
